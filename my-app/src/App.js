@@ -1,38 +1,48 @@
 import {useState, useEffect} from "react";
 
 function App() {
-  const [toDo, setToDo] = useState("");
-  const [toDos, setToDos] = useState([]);
-  const onChange = (event) => setToDo(event.target.value);
-  const onSubmit = (event) => {
-    event.preventDefault();
-    if (toDo === "") return;
-    setToDos((current) => [...current, toDo]);
-    setToDo("");
+  const [loading, setLoading] = useState(true);
+  const [coins, setCoins] = useState([]);
+  const [cost, setCost] = useState();
+  const [money, setMoney] = useState();
+  const [empty, setEmpty] = useState(true);
+  const onChange = (event) => {
+    setCost(event.target.value);
   }
-  const deleteBtn = (index) => {
-    setToDos((curToDos) => curToDos.filter((_, curIndex) => 
-    curIndex !== index));
+  const calMoney = (event) => {
+    setMoney(event.target.value);
+    setEmpty(false);
   }
   
-  return <div>
-    <h1>Hi There! ({toDos.length})</h1>
-    <form onSubmit={onSubmit}>
-      <input
-        value={toDo}
-        onChange={onChange}
-        type="text"
-        placeholder="write something please"
-      />
-      <button>submit it</button>
-    </form>
-    <hr />
-    <ul>
-      {toDos.map((item, index) => <li key={index}>{item}
-      <button onClick={() => deleteBtn(index)}>💕</button>
-      </li>)}
-    </ul>
-  </div>
+  useEffect(() => {
+    fetch("https://api.coinpaprika.com/v1/tickers")
+      .then(response => response.json())
+      .then(json => {
+        setCoins(json);
+        setLoading(false);
+      })
+  }, [])
+
+  return (
+    <div>
+      {loading ? <strong>loading...</strong> : 
+        <select onChange={onChange}>
+          {coins.map((coin, index) => 
+            <option key={index} value={coin.quotes.USD.price}>
+              {coin.name} ({coin.symbol}) : ${coin.quotes.USD.price} USD
+            </option>
+          )}
+        </select>
+      }
+      <div>
+        <input onChange={calMoney}
+          value={money}
+          type="number" 
+          placeholder="write something" />
+      </div>
+      {empty ? null : <h3>{money / cost}</h3>}
+    </div>
+  )
 }
 
 export default App;
